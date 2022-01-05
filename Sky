@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+import mido
+from mido import MidiFile
+import argparse
+import json
+import os
+import numpy as np
+
+location = os.getcwd() + '/'
+file_path = os.path.abspath(os.path.dirname(__file__)) + '/'
+
+list_0 = []
+player = {'songNotes': []}
+tempol = {}
+semis = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+time_passed = 0
+ttime = 0
+note_number = 0
+tempo = 0
+
+parser = argparse.ArgumentParser(description='A little tool for script trans.')
+
+parser.add_argument('-n', '--name', dest='name', help='input file name(optional)')
+parser.add_argument('-r', '--range', dest='nrangec', help='The range of file(not suggest to use)')
+parser.add_argument('-o', '--out', dest='out', help='Special out file name(default *.mid.txt)')
+parser.add_argument('-a', '--all', dest='all', help='Output all the range of file')
+
+args = parser.parse_args()
+
+if args.name is None:
+    midi = input("name:") + ".mid"
+    try:
+        mid = MidiFile(location + midi)
+        nfile = location + midi
+    except FileNotFoundError:
+        mid = MidiFile(file_path + midi)
+        nfile = file_path + midi
+else:
+    mid = MidiFile(args.name)
+
+if args.out is not None:
+    nfile = location + args.out
+
+
+def filer(out, file_name):
+    file_name = str(file_name) + ".txt"
+    try:
+        file = open(file_name, mode='x')
+    except IOError:
+        file = open(file_name, mode='r+')
+    json.dump(out, file)
+    file.close()
+
+
+def note_number_to_name(note_number):
+    note_number = int(np.round(note_number))
+    return semis[note_number % 12] + str(note_number // 12 - 1)
+
+
+def note_number_to_dev(note_number):
+    note_number = int(np.round(note_number))
+    # print(str(note_number // 12 - 1))
+    return str(note_number // 12 - 1)
+
+
+def note_trans(nnote, nrange):
+    nmin = str(int(nrange) + 1)
+    nmax = str(int(nrange) + 2)
+    nrange = str(nrange)
+    # print("C" + nrange)
+    # print(nnote)
+    if nnote == str("C" + nrange):
+        nretuen = "1Key0"
+    elif nnote == str("D" + nrange):
+        nretuen = "1Key1"
+    elif nnote == str("E" + nrange):
+        nretuen = "1Key2"
+    elif nnote == str("F" + nrange):
+        nretuen = "1Key3"
+    elif nnote == str("G" + nrange):
+        nretuen = "1Key4"
+    elif nnote == str("A" + nrange):
+        nretuen = "1Key5"
+    elif nnote == str("B" + nrange):
+        nretuen = "1Key6"
+    elif nnote == str("C" + nmin):
+        nretuen = "1Key7"
+    elif nnote == str("D" + nmin):
+        nretuen = "1Key8"
+    elif nnote == str("E" + nmin):
+        nretuen = "1Key9"
+    elif nnote == str("F" + nmin):
+        nretuen = "1Key10"
+    elif nnote == str("G" + nmin):
+        nretuen = "1Key11"
+    elif nnote == str("A" + nmin):
+        nretuen = "1Key12"
+    elif nnote == str("B" + nmin):
+        nretuen = "1Key13"
+    elif nnote == str("C" + nmax):
+        nretuen = "1Key14"
+    else:
+        nretuen = "None"
+
+    return nretuen
+
+
+def note_transD(dnote, drange):
+    dmin = str(int(drange) + 1)
+    dmax = str(int(drange) + 2)
+    drange = str(drange)
+    # print("C" + nrange)
+    # print(nnote)
+    if dnote == str("C#" + drange):
+        dretuen = "1Key0"
+    elif dnote == str("D#" + drange):
+        dretuen = "1Key1"
+    elif dnote == str("F" + drange):
+        dretuen = "1Key2"
+    elif dnote == str("F#" + drange):
+        dretuen = "1Key3"
+    elif dnote == str("G#" + drange):
+        dretuen = "1Key4"
+    elif dnote == str("A#" + drange):
+        dretuen = "1Key5"
+    elif dnote == str("C" + drange):
+        dretuen = "1Key6"
+    elif dnote == str("C#" + dmin):
+        dretuen = "1Key7"
+    elif dnote == str("D#" + dmin):
+        dretuen = "1Key8"
+    elif dnote == str("F" + dmin):
+        dretuen = "1Key9"
+    elif dnote == str("F#" + dmin):
+        dretuen = "1Key10"
+    elif dnote == str("G#" + dmin):
+        dretuen = "1Key11"
+    elif dnote == str("A#" + dmin):
+        dretuen = "1Key12"
+    elif dnote == str("C" + dmin):
+        dretuen = "1Key13"
+    elif dnote == str("C#" + dmax):
+        dretuen = "1Key14"
+    else:
+        dretuen = "None"
+
+    return dretuen
+
+
+def note_tr(tnote, trange):
+    if args.all is not None:
+        return note_transD(tnote, trange)
+    else:
+        return note_trans(tnote, trange)
+
+
+for i, track in enumerate(mid.tracks):
+    # tempo system:
+    for msg in track:
+        if msg.type == "set_tempo":
+            tempo = msg.tempo
+            # print(note_ftime, tempo)
+        # reference: https://zhuanlan.zhihu.com/p/62475524
+        note_time = mido.tick2second(msg.time, mid.ticks_per_beat, tempo)
+        time_passed += note_time
+        real_time = note_time + time_passed
+        note_ftime = str(int(round(real_time, 3) * 1000))
+        if msg.type == "set_tempo":
+            tempo = msg.tempo
+            tempol[tempo] = note_ftime
+            # print(note_ftime, tempo)
+
+    for msg in track:
+        if msg.type == "note_on":
+            if msg.velocity != 0:
+                note_number += 1
+                list_0.append(note_number_to_dev(msg.note))
+    tempo = 0
+    note_ftime = 0
+    note_time = 0
+    time_passed = 0
+    real_time = 0
+
+    list_0 = list(set(list_0))
+    list_0.sort()
+    print('Track {} {}'.format(i, track.name), ",note number:", note_number, ",note range:", list(list_0))
+    nrange = input("Range?")
+
+    if nrange in list_0:
+        for msg in track:
+            for i in tempol:
+                if int(note_ftime) >= int(tempol[i]) and i != tempo:
+                    tempo = i
+            note_time = mido.tick2second(msg.time, mid.ticks_per_beat, tempo)
+            real_time = note_time + time_passed
+            time_passed += note_time
+            if msg.type == "note_on":
+                if msg.velocity != 0:
+                    note_key = note_tr(note_number_to_name(msg.note), nrange)
+                    if note_key != "None":
+                        note_ftime = str(int(round(real_time, 3) * 1000))
+                        player['songNotes'].append({
+                            'time': int(float(note_ftime)),
+                            'key': note_key,
+                        })
+                        # print(note_key, str(round(real_time, 3)))'''
+
+player['songNotes'] = sorted(player['songNotes'], key=lambda i: i['time'])
+filer(player, nfile)
