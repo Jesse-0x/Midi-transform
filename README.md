@@ -10,7 +10,7 @@ time: normal time * 1000
 key: 1Key0-1Key14
 
 
-Basiclly it ransform into this format then you can play inside `Player.lua` on your phone. Need a tool E.G. Autotouch on your phone to play the script.
+Basically it transforms into this format then you can play inside `Player.lua` on your phone. Need a tool E.G. Autotouch on your phone to play the script.
 
 ### Usage
 
